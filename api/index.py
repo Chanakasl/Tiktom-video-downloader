@@ -106,7 +106,7 @@ def download_tiktok(message):
             
             # Audio එක යැවීම
             if audio_url:
-                bot.send_audio(message.chat.id, audio_url, title="TikTok Audio 🎵", caption="🎀 *POWERED BY RIKA TEACH* 🎀", parse_mode='Markdown')
+                bot.send_audio(message.chat.id, audio_url, title="TikTok Audio 🎵", caption="🎀 *ᴘᴏᴡᴇʀᴅ ʙʏ ᴄʜᴜᴄᴋʏ ᴏꜰᴄ* 🎀", parse_mode='Markdown')
             
             # Processing පණිවිඩය මකා දැමීම
             bot.delete_message(message.chat.id, msg.message_id)
@@ -114,4 +114,3 @@ def download_tiktok(message):
             bot.edit_message_text("ᴘʟᴇᴀꜱᴇ ᴄʜᴇᴄᴋ ʏᴏᴜʀ ʟɪɴᴋ👀.", chat_id=message.chat.id, message_id=msg.message_id)
     except Exception as e:
         bot.edit_message_text("⚠️ ᴇʀʀᴏʀ. ᴛʀʏ ᴀɢᴀɪɴ࿐ .", chat_id=message.chat.id, message_id=msg.message_id)
-
