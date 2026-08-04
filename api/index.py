@@ -6,23 +6,26 @@ from flask import Flask, request
 
 # Vercel Environment Variables වලින් Token එක ලබා ගැනීම
 BOT_TOKEN = os.environ.get('BOT_TOKEN')
-bot = telebot.TeleBot(BOT_TOKEN)
+
+# අනිවාර්යයි: Vercel වලදී Threading වැඩ කරන්නේ නැති නිසා threaded=False දාන්නම ඕන!
+bot = telebot.TeleBot(BOT_TOKEN, threaded=False)
 app = Flask(__name__)
 
 # ---------------------------------------------------------
 # ස්වයංක්‍රීයව Webhook Set කිරීමේ කොටස (Fully Automated)
 # ---------------------------------------------------------
 def auto_set_webhook():
-    # Vercel මඟින් ලබාදෙන Project URL එක ගැනීම
     host = os.environ.get('VERCEL_PROJECT_PRODUCTION_URL') or os.environ.get('VERCEL_URL')
     
     if host:
-        # Webhook URL එක සැකසීම (HTTPS අනිවාර්යයි)
         webhook_url = f"https://{host}/{BOT_TOKEN}"
         try:
-            bot.remove_webhook()
-            bot.set_webhook(url=webhook_url)
-            print(f"Webhook automatically set to: {webhook_url}")
+            # Webhook එක කලින්ම set වෙලාද බලලා නැත්නම් විතරක් set කරනවා 
+            webhook_info = bot.get_webhook_info()
+            if webhook_info.url != webhook_url:
+                bot.remove_webhook()
+                bot.set_webhook(url=webhook_url)
+                print(f"Webhook updated to: {webhook_url}")
         except Exception as e:
             print(f"Webhook Error: {e}")
 
@@ -37,7 +40,8 @@ def home():
 # Telegram එකෙන් එන පණිවිඩ (Updates) භාරගන්නා ස්ථානය
 @app.route(f'/{BOT_TOKEN}', methods=['POST'])
 def webhook():
-    if request.headers.get('content-type') == 'application/json':
+    # json format එකෙන් එනවා නම් විතරක් process කරනවා
+    if request.is_json:
         json_string = request.get_data().decode('utf-8')
         update = telebot.types.Update.de_json(json_string)
         bot.process_new_updates([update])
@@ -47,7 +51,6 @@ def webhook():
 # /start කමාන්ඩ් එක සඳහා
 @bot.message_handler(commands=['start'])
 def send_welcome(message):
-    # පින්තූරයේ ඇති ආකාරයටම අලංකාර Welcome Message එක
     welcome_text = (
         "🅃🄸🄺🅃🄾🄺 🄳🄾🅆🄽🄻🄾🄰🄳🄴🅁🔥🗿 🙈\n\n"
         "𝚃𝙸𝙺𝚃𝙾𝙺 𝙳𝙾𝚆𝙽𝙻𝙾𝙰𝙳𝙴𝚁 𝙱𝙾𝚃🧚‍♂️🎀\n\n"
@@ -64,9 +67,6 @@ def send_welcome(message):
         "ᴍᴀᴅᴇ ʙʏ ᴄʜᴜᴄᴋʏ ᴛᴇᴀᴍ 🐻\n"
         "𝙿𝙾𝚆𝙴𝚁𝙳 𝙱𝚈 𝙲𝙷𝚄𝙲𝙺𝚈 🍒🫶"
     )
-    
-    # දැනට කිසිදු බොත්තමක් (Inline Buttons) එකතු කර නැත
-    # ඔබට අවශ්‍ය නම් පසුව එකතු කළ හැක
     
     bot.reply_to(message, welcome_text, disable_web_page_preview=True)
 
@@ -114,3 +114,4 @@ def download_tiktok(message):
             bot.edit_message_text("ᴘʟᴇᴀꜱᴇ ᴄʜᴇᴄᴋ ʏᴏᴜʀ ʟɪɴᴋ👀.", chat_id=message.chat.id, message_id=msg.message_id)
     except Exception as e:
         bot.edit_message_text("⚠️ ᴇʀʀᴏʀ. ᴛʀʏ ᴀɢᴀɪɴ࿐ .", chat_id=message.chat.id, message_id=msg.message_id)
+
