@@ -1,46 +1,39 @@
 import os
 import telebot
-from telebot.types import InlineKeyboardMarkup, InlineKeyboardButton
 import requests
 from flask import Flask, request
 
 # Vercel Environment Variables වලින් Token එක ලබා ගැනීම
 BOT_TOKEN = os.environ.get('BOT_TOKEN')
 
-# අනිවාර්යයි: Vercel වලදී Threading වැඩ කරන්නේ නැති නිසා threaded=False දාන්නම ඕන!
+# threaded=False අනිවාර්යයි Vercel සඳහා
 bot = telebot.TeleBot(BOT_TOKEN, threaded=False)
 app = Flask(__name__)
 
-# ---------------------------------------------------------
-# ස්වයංක්‍රීයව Webhook Set කිරීමේ කොටස (Fully Automated)
-# ---------------------------------------------------------
-def auto_set_webhook():
-    host = os.environ.get('VERCEL_PROJECT_PRODUCTION_URL') or os.environ.get('VERCEL_URL')
-    
-    if host:
-        webhook_url = f"https://{host}/{BOT_TOKEN}"
-        try:
-            # Webhook එක කලින්ම set වෙලාද බලලා නැත්නම් විතරක් set කරනවා 
-            webhook_info = bot.get_webhook_info()
-            if webhook_info.url != webhook_url:
-                bot.remove_webhook()
-                bot.set_webhook(url=webhook_url)
-                print(f"Webhook updated to: {webhook_url}")
-        except Exception as e:
-            print(f"Webhook Error: {e}")
-
-# Server එක Start වෙද්දිම ස්වයංක්‍රීයව Webhook එක Set වේ
-auto_set_webhook()
-# ---------------------------------------------------------
-
 @app.route('/', methods=['GET'])
 def home():
-    return "TikTok Bot is Running & Webhook is Auto-Configured! 🚀"
+    return "TikTok Bot is Running Successfully! 🚀"
 
-# Telegram එකෙන් එන පණිවිඩ (Updates) භාරගන්නා ස්ථානය
+# ---------------------------------------------------------
+# Webhook එක Set කිරීමට වෙනම මාර්ගයක් (මෙය එක වරක් පමණක් කළ යුතුය)
+# ---------------------------------------------------------
+@app.route('/setup', methods=['GET'])
+def setup_webhook():
+    # Vercel එකේ URL එක ස්වයංක්‍රීයව ගැනීම
+    host = os.environ.get('VERCEL_PROJECT_PRODUCTION_URL') or request.host
+    webhook_url = f"https://{host}/{BOT_TOKEN}"
+    
+    try:
+        bot.remove_webhook()
+        bot.set_webhook(url=webhook_url)
+        return f"✅ Webhook Successfully Set To: {webhook_url}"
+    except Exception as e:
+        return f"❌ Webhook Error: {e}"
+# ---------------------------------------------------------
+
+# Telegram එකෙන් එන පණිවිඩ භාරගැනීම
 @app.route(f'/{BOT_TOKEN}', methods=['POST'])
 def webhook():
-    # json format එකෙන් එනවා නම් විතරක් process කරනවා
     if request.is_json:
         json_string = request.get_data().decode('utf-8')
         update = telebot.types.Update.de_json(json_string)
@@ -48,7 +41,7 @@ def webhook():
         return "OK", 200
     return "Forbidden", 403
 
-# /start කමාන්ඩ් එක සඳහා
+# /start කමාන්ඩ් එක
 @bot.message_handler(commands=['start'])
 def send_welcome(message):
     welcome_text = (
@@ -67,10 +60,9 @@ def send_welcome(message):
         "ᴍᴀᴅᴇ ʙʏ ᴄʜᴜᴄᴋʏ ᴛᴇᴀᴍ 🐻\n"
         "𝙿𝙾𝚆𝙴𝚁𝙳 𝙱𝚈 𝙲𝙷𝚄𝙲𝙺𝚈 🍒🫶"
     )
-    
     bot.reply_to(message, welcome_text, disable_web_page_preview=True)
 
-# Link එකක් එවූ විට Video එක Download කිරීම
+# TikTok Link එකක් එවූ විට
 @bot.message_handler(func=lambda message: True)
 def download_tiktok(message):
     url = message.text
@@ -81,7 +73,6 @@ def download_tiktok(message):
     msg = bot.reply_to(message, "⏳ 𝐏𝐋𝐄𝐀𝐒 𝐖𝐀𝐈𝐓... 𝐅𝐄𝐓𝐂𝐇𝐈𝐍𝐆 𝐕𝐈𝐃𝐄𝐎 🚀")
 
     try:
-        # TikWM API භාවිතයෙන් Video එක ගැනීම
         api_url = f"https://www.tikwm.com/api/?url={url}"
         response = requests.get(api_url).json()
 
@@ -101,17 +92,13 @@ def download_tiktok(message):
                 f"🎀 *ᴘᴏᴡᴇʀᴅ ʙʏ ᴄʜᴜᴄᴋʏ ᴏꜰᴄ* 🎀"
             )
 
-            # Video එක යැවීම
             bot.send_video(message.chat.id, video_url, caption=caption, parse_mode='Markdown')
             
-            # Audio එක යැවීම
             if audio_url:
                 bot.send_audio(message.chat.id, audio_url, title="TikTok Audio 🎵", caption="🎀 *ᴘᴏᴡᴇʀᴅ ʙʏ ᴄʜᴜᴄᴋʏ ᴏꜰᴄ* 🎀", parse_mode='Markdown')
             
-            # Processing පණිවිඩය මකා දැමීම
             bot.delete_message(message.chat.id, msg.message_id)
         else:
             bot.edit_message_text("ᴘʟᴇᴀꜱᴇ ᴄʜᴇᴄᴋ ʏᴏᴜʀ ʟɪɴᴋ👀.", chat_id=message.chat.id, message_id=msg.message_id)
     except Exception as e:
         bot.edit_message_text("⚠️ ᴇʀʀᴏʀ. ᴛʀʏ ᴀɢᴀɪɴ࿐ .", chat_id=message.chat.id, message_id=msg.message_id)
-
