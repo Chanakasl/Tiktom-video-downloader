@@ -75,7 +75,7 @@ def send_welcome(message):
 def download_tiktok(message):
     url = message.text
     if "tiktok.com" not in url:
-        bot.reply_to(message, "❌ කරුණාකර නිවැරදි TikTok Link එකක් එවන්න.")
+        bot.reply_to(message, "කරුණාකර නිවැරදි TikTok Link එකක් එවන්න💥🖐️.")
         return
 
     msg = bot.reply_to(message, "⏳ 𝐏𝐋𝐄𝐀𝐒 𝐖𝐀𝐈𝐓... 𝐅𝐄𝐓𝐂𝐇𝐈𝐍𝐆 𝐕𝐈𝐃𝐄𝐎 🚀")
