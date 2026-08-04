@@ -49,20 +49,20 @@ def webhook():
 def send_welcome(message):
     # පින්තූරයේ ඇති ආකාරයටම අලංකාර Welcome Message එක
     welcome_text = (
-        "𝘓𝘈𝘚𝘐 𝘛𝘐𝘒𝘛𝘖𝘒 𝘝𝘐𝘋𝘌𝘖 𝘋𝘖𝘞𝘕𝘓𝘖𝘈𝘋𝘌𝘙 𝘉𝘖𝘛 🙈\n\n"
-        "TIKTOK VIDEO DOWNLOAD BOT 🎀\n\n"
-        "ම BOT USER NAME :- @rika_ttdl_bot\n"
-        "ම BOT LINK :- https://t.me/rika_ttdl_bot\n\n"
-        "𝘋𝘦𝘷 :- @cyber_shamiya 🍒\n\n"
+        "🅃🄸🄺🅃🄾🄺 🄳🄾🅆🄽🄻🄾🄰🄳🄴🅁🔥🗿 🙈\n\n"
+        "𝚃𝙸𝙺𝚃𝙾𝙺 𝙳𝙾𝚆𝙽𝙻𝙾𝙰𝙳𝙴𝚁 𝙱𝙾𝚃🧚‍♂️🎀\n\n"
+        "Ꭷ ʙᴏᴛ ᴜꜱᴇʀ ɴᴀᴍᴇ :- @rika_ttdl_bot\n"
+        "Ꭷ ʙᴏᴛ ʟɪɴᴋ :- https://t.me/rika_ttdl_bot\n\n"
+        "𝙳ᴇᴠ :- @Ch4cky_bea 🇱🇰\n\n"
         "⚡ HD Quality\n"
         "🚫 No Watermark\n"
         "🎵 Music Support\n"
         "📊 Video Information\n"
         "🚀 Fast Download\n\n"
-        "🔗 𝘊𝘏𝘈𝘕𝘌𝘓 𝘓𝘐𝘕𝘒 🔗\n"
+        "🔗 𝗖𝗛𝗔𝗡𝗡𝗘𝗟 𝗟𝗜𝗡𝗞🇱🇰࿐ 🔗\n"
         "https://whatsapp.com/channel/0029VbCQggsAYlUMK1VwZb0d\n\n"
-        "𝘔𝘈𝘋𝘌 𝘉𝘠 𝘚𝘏𝘈𝘔𝘐𝘒𝘈 𝘋𝘌𝘕𝘜𝘞𝘈𝘕 🐻\n"
-        "𝘗𝘖𝘞𝘌𝘙𝘋 𝘉𝘠 𝘙𝘐𝘒𝘈 𝘛𝘌𝘈𝘊𝘏 🎀"
+        "ᴍᴀᴅᴇ ʙʏ ᴄʜᴜᴄᴋʏ ᴛᴇᴀᴍ 🐻\n"
+        "𝙿𝙾𝚆𝙴𝚁𝙳 𝙱𝚈 𝙲𝙷𝚄𝙲𝙺𝚈 🍒🫶"
     )
     
     # දැනට කිසිදු බොත්තමක් (Inline Buttons) එකතු කර නැත
@@ -78,7 +78,7 @@ def download_tiktok(message):
         bot.reply_to(message, "❌ කරුණාකර නිවැරදි TikTok Link එකක් එවන්න.")
         return
 
-    msg = bot.reply_to(message, "⏳ 𝘗𝘭𝘦𝘢𝘴𝘦 𝘞𝘢𝘪𝘵... 𝘍𝘦𝘵𝘤𝘩𝘪𝘯𝘨 𝘝𝘪𝘥𝘦𝘰 🚀")
+    msg = bot.reply_to(message, "⏳ 𝐏𝐋𝐄𝐀𝐒 𝐖𝐀𝐈𝐓... 𝐅𝐄𝐓𝐂𝐇𝐈𝐍𝐆 𝐕𝐈𝐃𝐄𝐎 🚀")
 
     try:
         # TikWM API භාවිතයෙන් Video එක ගැනීම
@@ -94,7 +94,7 @@ def download_tiktok(message):
             likes = data.get('digg_count', 0)
 
             caption = (
-                f"✨ *Video Downloaded Successfully* ✨\n\n"
+                f"✨ *ᴠɪᴅᴇᴏ ᴅᴏᴡɴʟᴏᴀᴅᴇᴅ ꜱᴜᴄᴄᴇꜱꜰᴜʟʟʏ* ✨\n\n"
                 f"📝 *Title:* {title}\n"
                 f"👤 *Author:* {author}\n"
                 f"❤️ *Likes:* {likes}\n\n"
