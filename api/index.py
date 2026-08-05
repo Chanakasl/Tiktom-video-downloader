@@ -3,10 +3,7 @@ import telebot
 import requests
 from flask import Flask, request
 
-# Vercel Environment Variables වලින් Token එක ලබා ගැනීම
 BOT_TOKEN = os.environ.get('BOT_TOKEN')
-
-# Vercel සඳහා threaded=False අනිවාර්යයි
 bot = telebot.TeleBot(BOT_TOKEN, threaded=False)
 app = Flask(__name__)
 
@@ -14,9 +11,6 @@ app = Flask(__name__)
 def home():
     return "TikTok Bot is Running Successfully! 🚀"
 
-# ---------------------------------------------------------
-# Webhook Setup Route
-# ---------------------------------------------------------
 @app.route('/setup', methods=['GET'])
 def setup_webhook():
     host = os.environ.get('VERCEL_PROJECT_PRODUCTION_URL') or request.host
@@ -28,9 +22,7 @@ def setup_webhook():
         return f"✅ Webhook Successfully Set To: {webhook_url}"
     except Exception as e:
         return f"❌ Webhook Error: {e}"
-# ---------------------------------------------------------
 
-# Telegram එකෙන් එන පණිවිඩ භාරගැනීම
 @app.route(f'/{BOT_TOKEN}', methods=['POST'])
 def webhook():
     if request.is_json:
@@ -40,7 +32,6 @@ def webhook():
         return "OK", 200
     return "Forbidden", 403
 
-# /start කමාන්ඩ් එක
 @bot.message_handler(commands=['start'])
 def send_welcome(message):
     welcome_text = (
@@ -61,7 +52,6 @@ def send_welcome(message):
     )
     bot.reply_to(message, welcome_text, disable_web_page_preview=True)
 
-# TikTok Link එකක් එවූ විට Video එක Download කිරීම
 @bot.message_handler(func=lambda message: True)
 def download_tiktok(message):
     url = message.text.strip()
@@ -69,10 +59,10 @@ def download_tiktok(message):
         bot.reply_to(message, "කරුණාකර නිවැරදි TikTok Link එකක් එවන්න💥🖐️.")
         return
 
-    msg = bot.reply_to(message, "⏳ 𝐏𝐋𝐄𝐀𝐒𝐄 𝐖𝐀𝐈𝐓... 𝐅𝐄𝐓𝐂𝐇𝐈𝐍𝐆 𝐕𝐈𝐃𝐄𝐎 🚀")
+    msg = bot.reply_to(message, "⏳ 𝐏𝐋𝐄𝐀𝐒𝐄 𝐖𝐀𝐈𝐓... 𝐅𝐄𝐓𝐂𝐇𝐈𝐍𝐆 𝐕𝐈𝐃𝙴𝙾 🚀")
 
     try:
-        # Short links (vt.tiktok.com) expand කරගැනීම සඳහා
+        # Short link expand කරගැනීම
         if "vt.tiktok.com" in url or "vm.tiktok.com" in url:
             try:
                 r = requests.head(url, allow_redirects=True, timeout=5)
@@ -80,14 +70,14 @@ def download_tiktok(message):
             except:
                 pass
 
-        # TikWM API භාවිතයෙන් Video එක ලබා ගැනීම
-        api_url = f"https://www.tikwm.com/api/?url={url}"
-        headers = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)'}
-        response = requests.get(api_url, headers=headers).json()
+        # වඩාත් වේගවත් සහ විශ්වාසදායක API එකක් භාවිතය
+        api_url = f"https://tikwm.com/api/?url={url}&hd=1"
+        headers = {'User-Agent': 'Mozilla/5.0'}
+        response = requests.get(api_url, headers=headers, timeout=8).json()
 
         if response.get('code') == 0:
             data = response['data']
-            video_url = data.get('play')
+            video_url = data.get('hdplay') or data.get('play')
             audio_url = data.get('music')
             title = data.get('title', 'No Title')
             author = data.get('author', {}).get('nickname', 'Unknown')
@@ -111,4 +101,4 @@ def download_tiktok(message):
         else:
             bot.edit_message_text("ᴘʟᴇᴀꜱᴇ ᴄʜᴇᴄᴋ ʏᴏᴜʀ ʟɪɴᴋ👀. Video not found.", chat_id=message.chat.id, message_id=msg.message_id)
     except Exception as e:
-        bot.edit_message_text(f"⚠️ ᴇʀʀᴏʀ: {str(e)[:50]}", chat_id=message.chat.id, message_id=msg.message_id)
+        bot.edit_message_text("⚠️ ᴅᴏᴡɴʟᴏᴀᴅ ꜰᴀɪʟᴇᴅ. ᴘʟᴇᴀꜱᴇ ᴛʀʏ ᴀɢᴀɪɴ ʟᴀᴛᴇʀ.", chat_id=message.chat.id, message_id=msg.message_id)
