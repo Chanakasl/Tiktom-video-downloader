@@ -1,10 +1,10 @@
-name: Telegram TikTok Bot 24/7
+name: Deploy Telegram Bot to GitHub Actions
 
 on:
   push:
     branches: [ main ]
   schedule:
-    - cron: "0 */5 * * *"  # සෑම පැය 5කට වරක්ම නැවත ක්‍රියාත්මක වේ
+    - cron: "0 */5 * * *"  # සෑම පැය 5කට වරක්ම Action එක අලුත් වේ
   workflow_dispatch:
 
 jobs:
@@ -25,7 +25,8 @@ jobs:
         python -m pip install --upgrade pip
         pip install -r requirements.txt
 
-    - name: Run Bot and Waitress Server
+    - name: Run Flask & Bot Script Check
       env:
         BOT_TOKEN: ${{ secrets.BOT_TOKEN }}
-      run: python bot.py
+      run: |
+        python -c "import bot; print('Bot script compiled successfully without errors!')"
