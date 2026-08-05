@@ -6,7 +6,7 @@ from flask import Flask, request
 # Vercel Environment Variables වලින් Token එක ලබා ගැනීම
 BOT_TOKEN = os.environ.get('BOT_TOKEN')
 
-# threaded=False අනිවාර්යයි Vercel සඳහා
+# Vercel සඳහා threaded=False අනිවාර්යයි
 bot = telebot.TeleBot(BOT_TOKEN, threaded=False)
 app = Flask(__name__)
 
@@ -15,11 +15,10 @@ def home():
     return "TikTok Bot is Running Successfully! 🚀"
 
 # ---------------------------------------------------------
-# Webhook එක Set කිරීමට වෙනම මාර්ගයක් (මෙය එක වරක් පමණක් කළ යුතුය)
+# Webhook Setup Route
 # ---------------------------------------------------------
 @app.route('/setup', methods=['GET'])
 def setup_webhook():
-    # Vercel එකේ URL එක ස්වයංක්‍රීයව ගැනීම
     host = os.environ.get('VERCEL_PROJECT_PRODUCTION_URL') or request.host
     webhook_url = f"https://{host}/{BOT_TOKEN}"
     
@@ -62,23 +61,33 @@ def send_welcome(message):
     )
     bot.reply_to(message, welcome_text, disable_web_page_preview=True)
 
-# TikTok Link එකක් එවූ විට
+# TikTok Link එකක් එවූ විට Video එක Download කිරීම
 @bot.message_handler(func=lambda message: True)
 def download_tiktok(message):
-    url = message.text
+    url = message.text.strip()
     if "tiktok.com" not in url:
         bot.reply_to(message, "කරුණාකර නිවැරදි TikTok Link එකක් එවන්න💥🖐️.")
         return
 
-    msg = bot.reply_to(message, "⏳ 𝐏𝐋𝐄𝐀𝐒 𝐖𝐀𝐈𝐓... 𝐅𝐄𝐓𝐂𝐇𝐈𝐍𝐆 𝐕𝐈𝐃𝐄𝐎 🚀")
+    msg = bot.reply_to(message, "⏳ 𝐏𝐋𝐄𝐀𝐒𝐄 𝐖𝐀𝐈𝐓... 𝐅𝐄𝐓𝐂𝐇𝐈𝐍𝐆 𝐕𝐈𝐃𝐄𝐎 🚀")
 
     try:
+        # Short links (vt.tiktok.com) expand කරගැනීම සඳහා
+        if "vt.tiktok.com" in url or "vm.tiktok.com" in url:
+            try:
+                r = requests.head(url, allow_redirects=True, timeout=5)
+                url = r.url
+            except:
+                pass
+
+        # TikWM API භාවිතයෙන් Video එක ලබා ගැනීම
         api_url = f"https://www.tikwm.com/api/?url={url}"
-        response = requests.get(api_url).json()
+        headers = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)'}
+        response = requests.get(api_url, headers=headers).json()
 
         if response.get('code') == 0:
             data = response['data']
-            video_url = data['play']
+            video_url = data.get('play')
             audio_url = data.get('music')
             title = data.get('title', 'No Title')
             author = data.get('author', {}).get('nickname', 'Unknown')
@@ -92,13 +101,14 @@ def download_tiktok(message):
                 f"🎀 *ᴘᴏᴡᴇʀᴅ ʙʏ ᴄʜᴜᴄᴋʏ ᴏꜰᴄ* 🎀"
             )
 
-            bot.send_video(message.chat.id, video_url, caption=caption, parse_mode='Markdown')
+            if video_url:
+                bot.send_video(message.chat.id, video_url, caption=caption, parse_mode='Markdown')
             
             if audio_url:
                 bot.send_audio(message.chat.id, audio_url, title="TikTok Audio 🎵", caption="🎀 *ᴘᴏᴡᴇʀᴅ ʙʏ ᴄʜᴜᴄᴋʏ ᴏꜰᴄ* 🎀", parse_mode='Markdown')
             
             bot.delete_message(message.chat.id, msg.message_id)
         else:
-            bot.edit_message_text("ᴘʟᴇᴀꜱᴇ ᴄʜᴇᴄᴋ ʏᴏᴜʀ ʟɪɴᴋ👀.", chat_id=message.chat.id, message_id=msg.message_id)
+            bot.edit_message_text("ᴘʟᴇᴀꜱᴇ ᴄʜᴇᴄᴋ ʏᴏᴜʀ ʟɪɴᴋ👀. Video not found.", chat_id=message.chat.id, message_id=msg.message_id)
     except Exception as e:
-        bot.edit_message_text("⚠️ ᴇʀʀᴏʀ. ᴛʀʏ ᴀɢᴀɪɴ࿐ .", chat_id=message.chat.id, message_id=msg.message_id)
+        bot.edit_message_text(f"⚠️ ᴇʀʀᴏʀ: {str(e)[:50]}", chat_id=message.chat.id, message_id=msg.message_id)
