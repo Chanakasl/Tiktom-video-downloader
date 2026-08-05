@@ -1,28 +1,39 @@
 import os
-import threading
 import telebot
 import requests
-from flask import Flask
-from waitress import serve
+from flask import Flask, request
 
 BOT_TOKEN = os.environ.get('BOT_TOKEN')
-# Multithreading සමඟ වැඩ කිරීමට threaded=True දීම අත්‍යවශ්‍ය වේ
-bot = telebot.TeleBot(BOT_TOKEN, threaded=True)
+bot = telebot.TeleBot(BOT_TOKEN, threaded=False)
+app = Flask(__name__)
 
-app = Flask('')
-
-@app.route('/')
+@app.route('/', methods=['GET'])
 def home():
-    print("Ping received from UptimeRobot! Server is awake.")
-    return "TikTok Telegram Bot is Running Live 24/7! 🚀"
+    return "GitHub Actions Telegram Bot is Active! 🚀"
 
-# Flask Web Server එක Background Thread එකක Run කිරීම (Waitress සමඟ)
-def run_web_server():
-    # Render, Koyeb හෝ GitHub Actions port පරීක්ෂා කිරීම සඳහා port 8080 භාවිතා කරයි
-    port = int(os.environ.get("PORT", 8080))
-    serve(app, host='0.0.0.0', port=port)
+# GitHub Action එක Run වෙද්දී ස්වයංක්‍රීයව Webhook එක සෙට් කරගැනීමට
+@app.route('/setup', methods=['GET'])
+def setup_webhook():
+    # GitHub Codespaces හෝ Koyeb/Render වැනි තැනකදි නම් URL එක ලබාගනී
+    host = os.environ.get('VERCEL_PROJECT_PRODUCTION_URL') or request.host
+    webhook_url = f"https://{host}/{BOT_TOKEN}"
+    
+    try:
+        bot.remove_webhook()
+        bot.set_webhook(url=webhook_url)
+        return f"✅ Webhook Successfully Set To: {webhook_url}"
+    except Exception as e:
+        return f"❌ Webhook Error: {e}"
 
-# Telegram Bot Start Message
+@app.route(f'/{BOT_TOKEN}', methods=['POST'])
+def webhook():
+    if request.is_json:
+        json_string = request.get_data().decode('utf-8')
+        update = telebot.types.Update.de_json(json_string)
+        bot.process_new_updates([update])
+        return "OK", 200
+    return "Forbidden", 403
+
 @bot.message_handler(commands=['start'])
 def send_welcome(message):
     welcome_text = (
@@ -43,7 +54,6 @@ def send_welcome(message):
     )
     bot.reply_to(message, welcome_text, disable_web_page_preview=True)
 
-# TikTok Link එකක් ලැබුණු විට Video එක ඩවුන්ලෝඩ් කිරීම
 @bot.message_handler(func=lambda message: True)
 def download_tiktok(message):
     url = message.text.strip()
@@ -51,7 +61,7 @@ def download_tiktok(message):
         bot.reply_to(message, "කරුණාකර නිවැරදි TikTok Link එකක් එවන්න💥🖐️.")
         return
 
-    msg = bot.reply_to(message, "⏳ 𝐏𝐋𝐄𝐀𝐒𝐄 𝐖𝐀𝐈𝐓... 𝐅𝐄𝐓𝐂𝐇𝐈𝐍𝐆 𝐕𝐈𝐃𝙴𝙾 🚀")
+    msg = bot.reply_to(message, "⏳ 𝐏𝐋𝐄𝐀𝐒𝐄 𝐖𝐀𝐈𝐓... 𝐅𝐄𝐓𝐂𝐇𝐈𝐍𝑔 𝐕𝐈𝐃𝙴𝙾 🚀")
 
     try:
         if "vt.tiktok.com" in url or "vm.tiktok.com" in url:
@@ -78,28 +88,17 @@ def download_tiktok(message):
                 f"📝 *Title:* {title}\n"
                 f"👤 *Author:* {author}\n"
                 f"❤️ *Likes:* {likes}\n\n"
-                f"🎀 *ᴘᴏᴡᴇʀᴅ ʙʏ ᴄʜᴜᴄᴋʏ ᴏꜰᴄ* 🎀"
+                f"🎀 *ᴘᴏᴡᴇʀᴅ ʙʏ 𝚌𝚑𝚞𝚌𝚔𝚢 ᴏꜰᴄ* 🎀"
             )
 
             if video_url:
                 bot.send_video(message.chat.id, video_url, caption=caption, parse_mode='Markdown')
             
             if audio_url:
-                bot.send_audio(message.chat.id, audio_url, title="TikTok Audio 🎵", caption="🎀 *ᴘᴏᴡᴇʀᴅ ʙʏ ᴄʜᴜᴄᴋʏ ᴏꜰᴄ* 🎀", parse_mode='Markdown')
+                bot.send_audio(message.chat.id, audio_url, title="TikTok Audio 🎵", caption="🎀 *ᴘᴏᴡᴇʀᴅ ʙʏ 𝚌𝚑𝚞𝚌𝚔𝚢 ᴏꜰᴄ* 🎀", parse_mode='Markdown')
             
             bot.delete_message(message.chat.id, msg.message_id)
         else:
             bot.edit_message_text("ᴘʟᴇᴀꜱᴇ ᴄʜᴇᴄᴋ ʏᴏᴜʀ ʟɪɴᴋ👀. Video not found.", chat_id=message.chat.id, message_id=msg.message_id)
     except Exception as e:
         bot.edit_message_text("⚠️ ᴅᴏᴡɴʟᴏᴀᴅ ꜰᴀɪʟᴇᴅ. ᴘʟᴇᴀꜱᴇ ᴛʀʏ ᴀɢᴀɪɴ ʟᴀᴛᴇʀ.", chat_id=message.chat.id, message_id=msg.message_id)
-
-if __name__ == "__main__":
-    # 1. Flask Web Server එක වෙනම Thread එකක පණ ගැන්වීම
-    server_thread = threading.Thread(target=run_web_server)
-    server_thread.daemon = True
-    server_thread.start()
-    print("Waitress Web Server started on port 8080...")
-
-    # 2. Telegram Bot එක Infinity Polling මඟින් ධාවනය කිරීම
-    print("Telegram Bot is polling...")
-    bot.infinity_polling(allowed_updates=telebot.util.update_types)
